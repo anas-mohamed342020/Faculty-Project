@@ -13,7 +13,9 @@ const questionnaireRouter = require('./modules/Questionnaire/questionnaire.route
 app.use(userRouter,staffRouter,courseRouter,questionnaireRouter)
 app.use('/uploads',express.static('uploads'))
 
-
+app.get('/',(req,res)=>{
+    res.json({message:"Welcome to Faculty-Project API"})
+})
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`)) 
 

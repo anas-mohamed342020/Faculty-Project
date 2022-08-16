@@ -12,7 +12,7 @@ const router = require('express').Router()
 
 
 
-router.post('/add-staff',validation(staffSchema),addStaff)
+router.post('/add-staff',validation(staffSchema),auth([roles.superAdmin]),addStaff)
 router.get('/confirm-email/:token',validation(confirmSchema),confirmEmail)
 router.post('/signin',validation(signInScema),signIn)
 router.patch('/signout',validation(softDeleteSchema),auth(),signOut)
