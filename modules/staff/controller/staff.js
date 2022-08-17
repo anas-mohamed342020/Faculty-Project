@@ -11,7 +11,7 @@ const { Qr_code } = require("../../../services/generateQR_code");
 
 const addStaff = async (req, res) => {
   try {
-    const { name, email,code,user_id, password, phone,role } = req.body;
+    const { name, email, code, user_id, password, phone, role } = req.body;
     const student = await userModel.findOne({ email });
     if (student) {
       res
@@ -22,9 +22,9 @@ const addStaff = async (req, res) => {
         name,
         user_id,
         code,
-        phone
-      })
-      console.log({qr});
+        phone,
+      });
+      console.log({ qr });
       let addstudent = new userModel({
         name,
         email,
@@ -32,8 +32,8 @@ const addStaff = async (req, res) => {
         phone,
         code,
         user_id,
-        Qr_code:qr,
-        role
+        Qr_code: qr,
+        role,
       });
       addstudent = await addstudent.save();
       const subject = "E-mail confirmation";
@@ -90,7 +90,7 @@ const confirmEmail = async (req, res) => {
     catchError(res, error);
   }
 };
-
+/*
 const signIn = async (req, res) => {
   try {
     const { code, password } = req.body; 
@@ -131,6 +131,52 @@ const signIn = async (req, res) => {
     } else {
       res.status(StatusCodes.FORBIDDEN).json({
         message: "please confirm your email",
+        status: ReasonPhrases.FORBIDDEN,
+      });
+    }
+  } catch (error) {
+    catchError(res, error);
+  }
+};
+*/
+const signIn = async (req, res) => {
+  try {
+    const { code, password } = req.body;
+    const student = await userModel.findOne({ code });
+    if (student) {
+      const isTruePass = await bcrypt.compare(password, student.password);
+      if (isTruePass) {
+        if (student.online) {
+          res.status(StatusCodes.BAD_REQUEST).json({
+            message: "Sorry this user is online now",
+            status: ReasonPhrases.BAD_REQUEST,
+          });
+        } else {
+          if (student.confirmed) {
+            const studentData = { _id: student._id };
+            const token = jwt.sign(studentData, process.env.tokenKey);
+            await userModel.updateOne({ code }, { online: true });
+            res.status(StatusCodes.ACCEPTED).json({
+              message: "Welcome",
+              token,
+              status: ReasonPhrases.ACCEPTED,
+            });
+          } else {
+            res.status(StatusCodes.FORBIDDEN).json({
+              message: "not confirmed email",
+              status: ReasonPhrases.FORBIDDEN,
+            });
+          }
+        }
+      } else {
+        res.status(StatusCodes.FORBIDDEN).json({
+          message: "in-valid code or password",
+          status: ReasonPhrases.FORBIDDEN,
+        });
+      }
+    } else {
+      res.status(StatusCodes.FORBIDDEN).json({
+        message: "in-valid code or password",
         status: ReasonPhrases.FORBIDDEN,
       });
     }
@@ -199,7 +245,10 @@ const deletestudent = async (req, res) => {
     } else {
       res
         .status(StatusCodes.NOT_FOUND)
-        .json({ message: "student not found", status: ReasonPhrases.NOT_FOUND });
+        .json({
+          message: "student not found",
+          status: ReasonPhrases.NOT_FOUND,
+        });
     }
   } catch (error) {
     catchError(res, error);
@@ -218,7 +267,10 @@ const softDelete = async (req, res) => {
     } else {
       res
         .status(StatusCodes.NOT_FOUND)
-        .json({ message: "student not found", status: ReasonPhrases.NOT_FOUND });
+        .json({
+          message: "student not found",
+          status: ReasonPhrases.NOT_FOUND,
+        });
     }
   } catch (error) {
     catchError(res, error);
@@ -348,15 +400,20 @@ const changeForgetPass = async (req, res) => {
   }
 };
 
-const signOut = async(req,res)=>{
+const signOut = async (req, res) => {
   try {
     const id = req.user._id;
-    await userModel.findByIdAndUpdate(id,{online:false,lastSeen:Date.now()})
-    res.status(StatusCodes.ACCEPTED).json({message:"Done",status:ReasonPhrases.ACCEPTED})
+    await userModel.findByIdAndUpdate(id, {
+      online: false,
+      lastSeen: Date.now(),
+    });
+    res
+      .status(StatusCodes.ACCEPTED)
+      .json({ message: "Done", status: ReasonPhrases.ACCEPTED });
   } catch (error) {
-    catchError(res,error)
+    catchError(res, error);
   }
-}
+};
 module.exports = {
   addStaff,
   confirmEmail,
@@ -370,5 +427,5 @@ module.exports = {
   showCoverPic,
   forgetPassword,
   changeForgetPass,
-  signOut
+  signOut,
 };

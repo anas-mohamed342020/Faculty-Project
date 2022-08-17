@@ -11,7 +11,7 @@ const { Qr_code } = require("../../../services/generateQR_code");
 
 const addStudent = async (req, res) => {
   try {
-    const { name, email,code,user_id, password, phone } = req.body;
+    const { name, email,code,user_id,courses, password, phone } = req.body;
     const student = await userModel.findOne({ email });
     if (student) {
       res
